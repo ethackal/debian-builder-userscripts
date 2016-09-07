@@ -1,0 +1,31 @@
+#!/bin/bash
+
+TIMEZONE=UTC
+grml-debootstrap \
+	--target /tmp/debootstrap \
+	--mirror http://httpredir.debian.org/debian \
+	--release jessie \
+	--hostname jessie-minbase \
+	--debopt '--variant=minbase' \
+	--nopackages  \
+	--nopassword \
+	--nokernel \
+	--nointerfaces \
+	--force
+
+rm -rf /tmp/debootstrap/etc/debootstrap
+rm -rf /tmp/debootstrap/debootstrap
+rm /tmp/debootstrap/var/lib/apt/lists/*
+rm /tmp/debootstrap/var/lib/apt/lists/partial/*
+
+cd /tmp/debootstrap
+timestamp=$(date +%Y%m%d-%H%M%S)
+tar -c . | docker import - $minbase_repo:$timestamp
+docker tag $minbase_repo:{$timestamp,latest}
+
+logincmd=$(aws ecr get-login)
+if [ $? ]; then
+	$logincmd
+fi
+
+docker push $minbase_repo:{$timestamp,latest}

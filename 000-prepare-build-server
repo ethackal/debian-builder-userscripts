@@ -1,0 +1,43 @@
+#!/bin/bash
+
+tee /etc/apt/sources.list <<-EOF
+	deb http://httpredir.debian.org/debian jessie main contrib non-free
+	deb http://httpredir.debian.org/debian jessie-updates main contrib non-free
+	deb http://httpredir.debian.org/debian jessie-backports main contrib non-free
+	deb http://httpredir.debian.org/debian testing main contrib non-free
+	deb https://apt.dockerproject.org/repo debian-jessie main
+EOF
+
+apt-get install apt-transport-https ca-certificates
+apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D
+
+tee /etc/apt/preferences.d/grml-debootstrap <<-EOF
+	Package: *
+	Pin: release a=stable
+	Pin-Priority: 300
+
+	Package: *
+	Pin: release n=jessie-updates
+	Pin-Priority: 400
+
+	Package: *
+	Pin: release n=jessie-backports
+	Pin-Priority: 100
+
+	Package: *
+	Pin: release a=testing
+	Pin-Priority: 100
+
+	Package: debootstrap
+	Pin: release n=jessie-backports
+	Pin-Priority: 500
+
+	Package: grml-debootstrap
+	Pin: release a=testing
+	Pin-Priority: 450
+EOF
+
+apt-get update && apt-get upgrade -y
+apt-get install -y debootstrap grml-debootstrap docker-engine python-pip
+
+pip install --force-reinstall --upgrade awscli
